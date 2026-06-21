@@ -8,9 +8,32 @@ function CopyField({ label, value, mono = false, secret = false }) {
   const [visible, setVisible] = useState(false);
   if (!value) return null;
 
+  const fallbackCopy = () => {
+    const el = document.createElement('textarea');
+    el.value = value;
+    el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(el);
+    el.focus();
+    el.select();
+    try {
+      document.execCommand('copy');
+      toast(`${label} copied!`, 'success');
+    } catch {
+      toast('Could not copy — please copy manually.', 'error');
+    }
+    document.body.removeChild(el);
+  };
+
   const copy = () => {
-    navigator.clipboard.writeText(value);
-    toast(`${label} copied!`, 'success');
+    // navigator.clipboard requires HTTPS or localhost.
+    // Fall back to execCommand for plain HTTP (LAN IP access).
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(value)
+        .then(() => toast(`${label} copied!`, 'success'))
+        .catch(() => fallbackCopy());
+    } else {
+      fallbackCopy();
+    }
   };
 
   return (
@@ -20,7 +43,7 @@ function CopyField({ label, value, mono = false, secret = false }) {
         <span style={{
           flex: 1,
           fontFamily: mono ? 'var(--font-mono)' : 'inherit',
-          fontSize: mono ? 13 : 13,
+          fontSize: 13,
           letterSpacing: mono ? '0.02em' : 'normal',
           color: 'var(--text-primary)',
           wordBreak: 'break-all',
@@ -49,7 +72,6 @@ function CopyField({ label, value, mono = false, secret = false }) {
 }
 
 export default function EntryDetail({ entry, onEdit, onDelete, onToggleFav }) {
-  const { toast } = useToast();
   const strength = getStrength(entry.password || '');
 
   if (!entry) return null;
@@ -97,7 +119,7 @@ export default function EntryDetail({ entry, onEdit, onDelete, onToggleFav }) {
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Website</div>
             <a
-              href={entry.url}
+              href={entry.url.startsWith('http') ? entry.url : `https://${entry.url}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 13, textDecoration: 'none', wordBreak: 'break-all' }}

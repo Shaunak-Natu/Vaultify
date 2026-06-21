@@ -102,8 +102,8 @@ export default function EntryModal({ initial, onSave, onClose, saving }) {
                 </div>
 
                 <div className="field">
-                  <label>Website URL</label>
-                  <input className="input" type="url" placeholder="https://example.com" value={form.url} onChange={set('url')} />
+                  <label>Website URL <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: "normal", color: "var(--text-muted)" }}>(optional)</span></label>
+                  <input className="input" type="text" placeholder="https://example.com (optional)" value={form.url} onChange={set('url')} />
                 </div>
               </>
             )}
